@@ -1,6 +1,6 @@
 <?php
 
-// NÃO ESQUECER que a tabela users tem que ter uma coluna deleted_at e que o modelo User usa o trait SoftDeletes!!!!!
+// NÃO ESQUECER: A tabela `users` deve ter uma coluna `deleted_at` e o modelo `User` deve usar o trait `SoftDeletes`!
 
 namespace App\Http\Controllers;
 
@@ -11,12 +11,13 @@ class UserController extends Controller
 {
     /**
      * Exibe uma lista de usuários.
+     *
+     * Inclui usuários deletados logicamente caso necessário.
      */
     public function index()
     {
-        // Busca todos os usuários, incluindo os deletados logicamente, caso necessário.
-        $users = User::withTrashed()->get(); 
-        return view('users.index', compact('users')); // Retorna a view com os dados dos usuários.
+        $users = User::withTrashed()->get();
+        return view('users.index', compact('users'));
     }
 
     /**
@@ -24,7 +25,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('users.create'); // Mostra o formulário para criação de usuário.
+        return view('users.create');
     }
 
     /**
@@ -33,17 +34,15 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required',
+            'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
-            'password' => 'required|min:8',
-            // Adicione outras regras de validação, se necessário.
+            'password' => 'required|string|min:8',
         ]);
 
         User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => bcrypt($request->password), 
-            // Adicione outros campos, se necessário.
+            'password' => bcrypt($request->password),
         ]);
 
         return redirect()->route('users.index')->with('success', 'Usuário criado com sucesso.');
@@ -51,35 +50,35 @@ class UserController extends Controller
 
     /**
      * Exibe os detalhes de um usuário específico.
+     *
+     * O usuário é injetado automaticamente pela rota via Model Binding.
      */
-    public function show(string $id)
-    {
-        $user = User::withTrashed()->findOrFail($id); // Inclui usuários deletados logicamente.
-        return view('users.show', compact('user'));
-    }
+    public function show($id)
+{
+    $user = User::withTrashed()->findOrFail($id); // Inclui usuários deletados
+    return view('users.show', compact('user'));
+}
+
 
     /**
      * Exibe o formulário para editar um usuário.
      */
-    public function edit(string $id)
+    public function edit(User $user)
     {
-        $user = User::withTrashed()->findOrFail($id); // Inclui usuários deletados logicamente.
         return view('users.edit', compact('user'));
     }
 
     /**
      * Atualiza os dados de um usuário específico.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, User $user)
     {
         $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email,' . $id,
-            // Adicione outras regras de validação, se necessário.
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
         ]);
 
-        $user = User::withTrashed()->findOrFail($id); // Inclui usuários deletados logicamente.
-        $user->update($request->all()); 
+        $user->update($request->only(['name', 'email']));
 
         return redirect()->route('users.index')->with('success', 'Usuário atualizado com sucesso.');
     }
@@ -87,10 +86,9 @@ class UserController extends Controller
     /**
      * Marca um usuário como deletado logicamente.
      */
-    public function destroy(string $id)
+    public function destroy(User $user)
     {
-        $user = User::findOrFail($id);
-        $user->delete(); // Soft delete (não remove do banco).
+        $user->delete();
 
         return redirect()->route('users.index')->with('success', 'Usuário marcado como deletado.');
     }
@@ -98,10 +96,10 @@ class UserController extends Controller
     /**
      * Restaura um usuário que foi deletado logicamente.
      */
-    public function restore(string $id)
+    public function restore($id)
     {
-        $user = User::onlyTrashed()->findOrFail($id); // Busca apenas usuários deletados logicamente.
-        $user->restore(); // Restaura o usuário.
+        $user = User::onlyTrashed()->findOrFail($id);
+        $user->restore();
 
         return redirect()->route('users.index')->with('success', 'Usuário restaurado com sucesso.');
     }
@@ -109,10 +107,10 @@ class UserController extends Controller
     /**
      * Exclui definitivamente um usuário do banco de dados.
      */
-    public function forceDelete(string $id)
+    public function forceDelete($id)
     {
-        $user = User::onlyTrashed()->findOrFail($id); // Busca apenas usuários deletados logicamente.
-        $user->forceDelete(); // Exclui permanentemente.
+        $user = User::onlyTrashed()->findOrFail($id);
+        $user->forceDelete();
 
         return redirect()->route('users.index')->with('success', 'Usuário excluído definitivamente.');
     }

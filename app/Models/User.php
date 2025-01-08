@@ -4,16 +4,17 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes; // Importa o trait para exclusão lógica.
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes; // Inclui o trait SoftDeletes.
 
     /**
-     * The attributes that are mass assignable.
+     * Os atributos que podem ser atribuídos em massa.
      *
      * @var list<string>
      */
@@ -24,7 +25,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Os atributos que devem ser ocultados para serialização.
      *
      * @var list<string>
      */
@@ -34,7 +35,17 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * Os atributos que devem ser tratados como datas.
+     *
+     * @var list<string>
+     */
+    protected $dates = [
+        'deleted_at', // Define o atributo deleted_at como uma data.
+        'email_verified_at',
+    ];
+
+    /**
+     * Os atributos que devem ser convertidos para tipos específicos.
      *
      * @return array<string, string>
      */
